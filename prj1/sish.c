@@ -5,12 +5,14 @@
 // 10/16 "arr" is an array containing pointers to first char in string. access
 // elements via arr[i] for cd maybe do something similar to github link
 
+// 10/20 finished part 1, exit and cd
+// need to: free memory, clean up code, test
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h> //waitpid()
 #include <unistd.h>   //execvp()
-#define MAX_ARGS 5
+#define MAX_ARGS 15
 // read function
 #define BUFFERSIZE 200
 
@@ -22,11 +24,10 @@ char *readLine() {
   line = malloc(bufsize * sizeof(char));
   printf("sish> ");
   ssize_t chars = getline(&line, &bufsize, stdin);
-  //remove \n
-  if (line[chars - 1] == '\n') 
-  {
-      line[chars - 1] = '\0';
-      --chars;
+  // remove \n
+  if (line[chars - 1] == '\n') {
+    line[chars - 1] = '\0';
+    --chars;
   }
   return line;
 }
@@ -37,17 +38,16 @@ int runExec(char **arr) {
   char *exec = arr[0];           // exectuable file name
   char *arguments[MAX_ARGS + 1]; // max args + null terminated
   int status = -1;               // execvp status
-  
 
   // copy arguments from parse array
-  
+
   arguments[0] = arr[0];
   for (i = 0; arr[i] != NULL; i++) {
-    arguments[i+1] = arr[i+1];
+    arguments[i + 1] = arr[i + 1];
   }
 
   // null terminate
-  arguments[i+1] = NULL;
+  arguments[i + 1] = NULL;
 
   pid = fork();
   // child process not created
@@ -106,6 +106,10 @@ int exitBI() {
 // find a way to test function
 int cd(char **arr) {
   char cwd[BUFFERSIZE];
+  if (arr[1] == NULL) {
+    printf("Error no path: \n");
+    return 0;
+  }
   chdir(arr[1]);
   getcwd(cwd, BUFFERSIZE);
   printf("Current working dir: %s\n", cwd);
@@ -162,10 +166,12 @@ int main(void) {
     if (strcmp(arr[0], "cd") == 0) {
       runCommand(arr);
     }
-    else{
+    if (strcmp(arr[0], "history") == 0) {
+      historyFunction();
+    } else {
       runExec(arr);
     }
 
-    //return 0;
+    // return 0;
   }
 }
