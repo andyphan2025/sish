@@ -37,13 +37,17 @@ int runExec(char **arr) {
   char *exec = arr[0];           // exectuable file name
   char *arguments[MAX_ARGS + 1]; // max args + null terminated
   int status = -1;               // execvp status
+  
 
   // copy arguments from parse array
-  for (i = 0; &arr[i] != NULL; i++) {
-    arguments[i] = arr[i + 1];
+  
+  arguments[0] = arr[0];
+  for (i = 0; arr[i] != NULL; i++) {
+    arguments[i+1] = arr[i+1];
   }
+
   // null terminate
-  arguments[i + 1] = NULL;
+  arguments[i+1] = NULL;
 
   pid = fork();
   // child process not created
@@ -101,11 +105,10 @@ int exitBI() {
 // find a way to test whats in arr[1]
 // find a way to test function
 int cd(char **arr) {
-  // char path[BUFFERSIZE];
   char cwd[BUFFERSIZE];
-  chdir(cwd);
-  printf("Current working dir: %s\n", getcwd(cwd, BUFFERSIZE));
-  
+  chdir(arr[1]);
+  getcwd(cwd, BUFFERSIZE);
+  printf("Current working dir: %s\n", cwd);
 
   return 0;
 }
@@ -138,12 +141,10 @@ int runCommand(char **arr) {
   if (strcmp(arr[0], "exit") == 0) {
     // free memory first
     exitBI();
-    printf("%s", "hi");
   }
   // cd
   if (strcmp(arr[0], "cd") == 0) {
     cd(arr);
-    printf("%s", "1");
   }
   return 1;
 }
@@ -159,7 +160,10 @@ int main(void) {
       printf("%s", "hi2");
     }
     if (strcmp(arr[0], "cd") == 0) {
-      cd(arr);
+      runCommand(arr);
+    }
+    else{
+      runExec(arr);
     }
 
     //return 0;
