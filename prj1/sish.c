@@ -7,6 +7,7 @@
 
 // 10/20 finished part 1, exit and cd
 // need to: free memory, clean up code, test
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,7 @@
 #define MAX_ARGS 15
 // read function
 #define BUFFERSIZE 200
+int histCount = 0;
 
 char *readLine() {
   char *line;
@@ -29,6 +31,7 @@ char *readLine() {
     line[chars - 1] = '\0';
     --chars;
   }
+
   return line;
 }
 
@@ -117,27 +120,29 @@ int cd(char **arr) {
   return 0;
 }
 
-int count = 0;
-char history[100][BUFFERSIZE];
-void historyFunction() {
-  int i;
-  int j = 0;
-  int histCount = count;
+void historyFunction(char *history[], int histCount) {
 
-  for (i = 0; i < 100; i++) {
-    printf("%d. ", histCount);
-    while (history[i][j] != '\n' && history[i][j] != '\0') {
-      // printing command
-      printf("%c", history[i][j]);
-      j++;
+  for (int i = 0; i < histCount; i++) {
+    // print 1 history[i]
+    //&& strcmp(history[i], "\0"
+    if (history[i] != NULL && history[i] !="\0") {
+      printf("%d ", i);
+      printf("%s\n", history[i]);
+    } 
+      //printf("%s", "test");
+    //histCount++;
+    if (histCount >= 100) {
+      histCount = 0;
     }
-    printf("\n");
-    j = 0;
-    histCount--;
-    if (histCount == 0)
-      break;
+
+    // history[i] = (char*)malloc(50*sizeof(char));
   }
-  printf("\n");
+}
+void historyClearFunction(char *history[], int histCount) {
+  for (int i = 0; i < 100; i++) {
+    free(history[i]);
+  }
+  free(history);
 }
 
 int runCommand(char **arr) {
@@ -153,12 +158,31 @@ int runCommand(char **arr) {
   return 1;
 }
 
+void checkPipe(char **arr) {
+  char *pipe = "|";
+  if (strchr(**arr, *pipe)) {
+  }
+}
 int main(void) {
   char **arr;
+   int histCount = 0;
+  // char **history = (char**)malloc(100*sizeof(char*));
+  // init history
+  //char ** history = malloc(100 * sizeof(char*));
+  char *history[100];
+  //char history[100][20];
+  
+  for (int i = 0; i < 100; i++) {
+    // history[i] = NULL;
+    history[i] = (char*)malloc(sizeof(char*) * 100);
+    //history[i] = NULL;
+  }
+
   while (1) {
 
     char *line = readLine();
     arr = parse(line);
+
     if (strcmp(arr[0], "exit") == 0) {
       runCommand(arr);
       printf("%s", "hi2");
@@ -166,12 +190,38 @@ int main(void) {
     if (strcmp(arr[0], "cd") == 0) {
       runCommand(arr);
     }
+    
+    /*
+    if (history[histCount] != NULL) {
+      free(history[histCount]);
+    }
+    */
+    
+
+    if(history[histCount] != NULL){
+      history[histCount] = strdup(line);
+    histCount++;
+    }
     if (strcmp(arr[0], "history") == 0) {
-      historyFunction();
-    } else {
+      historyFunction(history, histCount);
+      // print arr[0]
+    }
+    /*
+    else if (strcmp(line, "history -c" )) {
+      historyClearFunction(history, histCount);
+    }
+      */
+
+    else {
       runExec(arr);
     }
-
-    // return 0;
+    
+    //strcpy(history[histCount], line);
+      //histCount++;
+      //history[histCount] = line;
+     //history[histCount] = strdup(line);
+    // histCount = (histCount + 1) % 100;
+    
+      
   }
 }
