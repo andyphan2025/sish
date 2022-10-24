@@ -55,7 +55,7 @@ int runExec(char **arr) {
   pid = fork();
   // child process not created
   if (pid == -1) {
-    perror("can't fork, error occurred\n");
+    perror("fork error\n");
     exit(EXIT_FAILURE);
   }
   // child process created
@@ -64,7 +64,7 @@ int runExec(char **arr) {
 
     // execvp failed
     if (status == -1) {
-      perror("Terminated Incorrectly\n");
+      perror("execvp failed\n");
     }
   }
   // parent process
@@ -120,8 +120,18 @@ int cd(char **arr) {
   return 0;
 }
 
-void historyFunction(char *history[], int histCount) {
-
+void historyFunction(char *history[], int histCount, int start) {
+if(start > 100){
+  for (int i = 0; i < 100; i++) {
+    // print 1 history[i]
+    //&& strcmp(history[i], "\0"
+    if (history[i] != NULL && history[i] !="\0") {
+      printf("%d ", i);
+      printf("%s\n", history[i]);
+    } 
+}
+  }
+  else
   for (int i = 0; i < histCount; i++) {
     // print 1 history[i]
     //&& strcmp(history[i], "\0"
@@ -131,19 +141,24 @@ void historyFunction(char *history[], int histCount) {
     } 
       //printf("%s", "test");
     //histCount++;
+    /*
     if (histCount >= 100) {
       histCount = 0;
     }
+*/
 
     // history[i] = (char*)malloc(50*sizeof(char));
   }
 }
 void historyClearFunction(char *history[], int histCount) {
-  for (int i = 0; i < 100; i++) {
-    free(history[i]);
+  for (int i = 0; i < histCount; i++) {
+    //free(history[i]);
+    history[i] = "\0";
   }
-  free(history);
+   // free(history);
 }
+
+
 
 int runCommand(char **arr) {
   // exit
@@ -157,14 +172,11 @@ int runCommand(char **arr) {
   }
   return 1;
 }
-
-void checkPipe(char **arr) {
-  char *pipe = "|";
-  if (strchr(**arr, *pipe)) {
-  }
-}
 int main(void) {
+  int b = 0;
+  size_t bufsize = 1024;
   char **arr;
+  int start = 0;
    int histCount = 0;
   // char **history = (char**)malloc(100*sizeof(char*));
   // init history
@@ -181,14 +193,19 @@ int main(void) {
   while (1) {
 
     char *line = readLine();
+    char * line2 = malloc(bufsize * sizeof(char));
+    strcpy(line2, line);
     arr = parse(line);
+    
 
     if (strcmp(arr[0], "exit") == 0) {
+      b++;
       runCommand(arr);
-      printf("%s", "hi2");
+    
     }
     if (strcmp(arr[0], "cd") == 0) {
       runCommand(arr);
+      b++;
     }
     
     /*
@@ -199,29 +216,55 @@ int main(void) {
     
 
     if(history[histCount] != NULL){
-      history[histCount] = strdup(line);
-    histCount++;
+      history[histCount] = strdup(line2);
+      histCount = (histCount + 1) % 100;
+      start++;
+    //histCount++;
     }
-    if (strcmp(arr[0], "history") == 0) {
-      historyFunction(history, histCount);
+   if (strcmp(line2, "history") == 0) {
+      historyFunction(history, histCount, start);
+     b++;
       // print arr[0]
     }
-    /*
-    else if (strcmp(line, "history -c" )) {
+    
+   if (strcmp(line2, "history -c") == 0) {
       historyClearFunction(history, histCount);
+     b++;
+     histCount = 0;
     }
-      */
+    
+     if((strcmp(arr[0], "history") == 0) && (arr[1] != NULL) && (strcmp(arr[1], "-c") != 0)){
+    //printf("test");
+        //historyOffset(arr, history, histCount);
+      
+       int x = atoi(arr[1]);
+  
+  if(x >= histCount){
+    printf("error: offset out of bounds \n");
+    //return 0;
+  }
+  if (history[x] != NULL && history[x] !="\0"){
+    arr = parse(history[x]);
+    runExec(arr);
+  }
+  
+       b++;
+     }
+      
+      
 
-    else {
-      runExec(arr);
-    }
+    //else
+      if(b == 0) {
+        runExec(arr);
+      }
+        b = 0;
+    
     
     //strcpy(history[histCount], line);
       //histCount++;
       //history[histCount] = line;
      //history[histCount] = strdup(line);
     // histCount = (histCount + 1) % 100;
-    
-      
+  
   }
 }
