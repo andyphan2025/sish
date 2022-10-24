@@ -1,20 +1,9 @@
-// 10/08 2:12am writing runExec() unsure of things like waitpid() and what the
-// parent process should do 10/13 seg fault core dump (most likey in parse
-// for-loop)
-
-// 10/16 "arr" is an array containing pointers to first char in string. access
-// elements via arr[i] for cd maybe do something similar to github link
-
-// 10/20 finished part 1, exit and cd
-// need to: free memory, clean up code, test
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h> //waitpid()
 #include <unistd.h>   //execvp()
 #define MAX_ARGS 15
-// read function
 #define BUFFERSIZE 200
 int histCount = 0;
 
@@ -22,11 +11,10 @@ char *readLine() {
   char *line;
   size_t bufsize = 1024;
   // dynamic allocation
-  // bufsize = (int *)malloc(bufsize * sizeof(int));
   line = malloc(bufsize * sizeof(char));
   printf("sish> ");
   ssize_t chars = getline(&line, &bufsize, stdin);
-  // remove \n
+  // remove \n replace with \0
   if (line[chars - 1] == '\n') {
     line[chars - 1] = '\0';
     --chars;
@@ -87,26 +75,13 @@ char **parse(char *line) {
     }
     arr[i++] = p;
   }
-  /*test print
-  for (size_t n = 0; n != i; ++n)
-{
-     printf("Token %zu is '%s'.\n", n, arr[n]);
-}
-*/
   return arr;
 }
 int exitBI() {
   // if first token is exit
   exit(0);
 }
-// pass in arr
-// get arr[1] which is the path
-// get cwd
-// chdir according to cwd and arr[1]
-// check for errors (invalid inputs)
-// print the path
-// find a way to test whats in arr[1]
-// find a way to test function
+
 int cd(char **arr) {
   char cwd[BUFFERSIZE];
   if (arr[1] == NULL) {
@@ -121,49 +96,43 @@ int cd(char **arr) {
 }
 
 void historyFunction(char *history[], int histCount, int start) {
-if(start > 100){
-  for (int i = 0; i < 100; i++) {
-    // print 1 history[i]
-    //&& strcmp(history[i], "\0"
-    if (history[i] != NULL && history[i] !="\0") {
-      printf("%d ", i);
-      printf("%s\n", history[i]);
-    } 
-}
-  }
-  else
-  for (int i = 0; i < histCount; i++) {
-    // print 1 history[i]
-    //&& strcmp(history[i], "\0"
-    if (history[i] != NULL && history[i] !="\0") {
-      printf("%d ", i);
-      printf("%s\n", history[i]);
-    } 
-      //printf("%s", "test");
-    //histCount++;
-    /*
-    if (histCount >= 100) {
-      histCount = 0;
+  //if more than 100 commands entered without clearing
+  int i;
+  if (start >= 100) {
+    //print 100 commands
+    for (i = 0; i < 100; i++) {
+      if (history[i] != NULL && history[i] != "\0") {
+        printf("%d ", i);
+        printf("%s\n", history[i]);
+      }
     }
-*/
-
-    // history[i] = (char*)malloc(50*sizeof(char));
-  }
+    //otherwise print only histCount amount of commands
+  } else
+    for (i = 0; i < histCount; i++) {
+      if (history[i] != NULL && history[i] != "\0") {
+        printf("%d ", i);
+        printf("%s\n", history[i]);
+      }
+    }
 }
-void historyClearFunction(char *history[], int histCount) {
-  for (int i = 0; i < histCount; i++) {
-    //free(history[i]);
+void historyClearFunction(char *history[], int histCount, int start) {
+  //clear all commands
+  int i;
+  if(start >= 100){
+    for ( i = 0; i < 100; i++) {
     history[i] = "\0";
   }
-   // free(history);
+    }
+  else
+    for ( i = 0; i < histCount; i++) {
+    history[i] = "\0";
+  }
+    
 }
-
-
 
 int runCommand(char **arr) {
   // exit
   if (strcmp(arr[0], "exit") == 0) {
-    // free memory first
     exitBI();
   }
   // cd
@@ -176,95 +145,76 @@ int main(void) {
   int b = 0;
   size_t bufsize = 1024;
   char **arr;
-  int start = 0;
-   int histCount = 0;
-  // char **history = (char**)malloc(100*sizeof(char*));
-  // init history
-  //char ** history = malloc(100 * sizeof(char*));
+  int start = 0; //total commands
+  int histCount = 0; //current command count
+
   char *history[100];
-  //char history[100][20];
-  
+
   for (int i = 0; i < 100; i++) {
-    // history[i] = NULL;
-    history[i] = (char*)malloc(sizeof(char*) * 100);
-    //history[i] = NULL;
+  //allocate mem for each index
+    history[i] = (char *)malloc(sizeof(char *) * 100);
   }
 
   while (1) {
 
     char *line = readLine();
-    char * line2 = malloc(bufsize * sizeof(char));
+    char *line2 = malloc(bufsize * sizeof(char));
+    //make copy of input before parsing
     strcpy(line2, line);
+    //parse input in arr
     arr = parse(line);
-    
 
     if (strcmp(arr[0], "exit") == 0) {
+      exit(0);
       b++;
       runCommand(arr);
-    
     }
     if (strcmp(arr[0], "cd") == 0) {
       runCommand(arr);
       b++;
     }
-    
-    /*
-    if (history[histCount] != NULL) {
-      free(history[histCount]);
-    }
-    */
-    
 
-    if(history[histCount] != NULL){
+    if (history[histCount] != NULL) {
+      //assign history indexes and increment commands counts
       history[histCount] = strdup(line2);
       histCount = (histCount + 1) % 100;
       start++;
-    //histCount++;
     }
-   if (strcmp(line2, "history") == 0) {
+    if (strcmp(line2, "history") == 0) {
+      //print history
       historyFunction(history, histCount, start);
-     b++;
-      // print arr[0]
+      b++;
     }
-    
-   if (strcmp(line2, "history -c") == 0) {
-      historyClearFunction(history, histCount);
-     b++;
-     histCount = 0;
-    }
-    
-     if((strcmp(arr[0], "history") == 0) && (arr[1] != NULL) && (strcmp(arr[1], "-c") != 0)){
-    //printf("test");
-        //historyOffset(arr, history, histCount);
-      
-       int x = atoi(arr[1]);
-  
-  if(x >= histCount){
-    printf("error: offset out of bounds \n");
-    //return 0;
-  }
-  if (history[x] != NULL && history[x] !="\0"){
-    arr = parse(history[x]);
-    runExec(arr);
-  }
-  
-       b++;
-     }
-      
-      
 
-    //else
-      if(b == 0) {
+    if (strcmp(line2, "history -c") == 0) {
+      //clear history and reset counts
+      historyClearFunction(history, histCount, start);
+      b++;
+      histCount = 0;
+      start = 0;
+    }
+
+    if ((strcmp(arr[0], "history") == 0) && (arr[1] != NULL) && (strcmp(arr[1], "-c") != 0)) {
+      //history with offset
+      //get int value from arg
+      int x = atoi(arr[1]);
+      
+      if (x >= histCount) {
+        printf("error: offset out of bounds \n");
+      }
+      //run command at specified index
+      if (history[x] != NULL && history[x] != 0) {
+        arr = parse(history[x]);
         runExec(arr);
       }
-        b = 0;
-    
-    
-    //strcpy(history[histCount], line);
-      //histCount++;
-      //history[histCount] = line;
-     //history[histCount] = strdup(line);
-    // histCount = (histCount + 1) % 100;
-  
+
+      b++;
+    }
+    //if no built-in commands are run, runExec()
+    if (b == 0) {
+      runExec(arr);
+    }
+    b = 0;
   }
 }
+
